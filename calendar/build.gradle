@@ -1,0 +1,34 @@
+  apply plugin: 'com.android.library'
+  
+  android {
+    
+    compileSdkVersion 29
+    
+    defaultConfig {
+      
+      minSdkVersion 9
+			
+      versionName project.property ('libraryVersion')
+      
+      vectorDrawables.useSupportLibrary = true
+      
+    }
+		
+  }
+  
+  apply from: 'https://raw.githubusercontent.com/acuna-public/MavenUpload/master/bintray.gradle'
+  apply from: 'https://raw.githubusercontent.com/acuna-public/MavenUpload/master/publish.gradle'
+  
+  dependencies {
+    
+    implementation fileTree (include: ['*.jar'], dir: 'libs')
+    
+<<<<<<< HEAD:calendar/build.gradle
+    api project (':androdesign')
+=======
+		//api 'ru.ointeractive:jabadaba:+'
+    api project (':jabadaba')
+		api 'com.android.support:support-annotations:28.0.0'
+>>>>>>> e2fd6126fb4be1743b0a9e7b3f4d6e1ee79315fb:andromeda/build.gradle
+		
+	}
