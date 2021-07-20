@@ -1,2 +1,2 @@
 # Calendar
- Caendar library for Android
+ Calendar library for Android
