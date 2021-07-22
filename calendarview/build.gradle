@@ -23,12 +23,6 @@
     
     implementation fileTree (include: ['*.jar'], dir: 'libs')
     
-<<<<<<< HEAD:calendar/build.gradle
     api project (':androdesign')
-=======
-		//api 'ru.ointeractive:jabadaba:+'
-    api project (':jabadaba')
-		api 'com.android.support:support-annotations:28.0.0'
->>>>>>> e2fd6126fb4be1743b0a9e7b3f4d6e1ee79315fb:andromeda/build.gradle
 		
 	}

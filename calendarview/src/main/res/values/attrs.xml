@@ -2,8 +2,7 @@
 	
   <declare-styleable name="CalendarView">
 	  
-	  <attr name="selected_text_color" format="color|reference" />
-	  <attr name="markedTextColor" format="color|reference" />
+	  <attr name="currentTextColor" format="color|reference" />
 	  <attr name="prevTextColor" format="color|reference" />
 	  <attr name="showTodayOnDay" format="boolean" />
 	  <attr name="dayLayout" format="reference" />

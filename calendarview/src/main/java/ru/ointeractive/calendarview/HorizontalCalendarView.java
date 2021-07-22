@@ -1,4 +1,4 @@
-	package ru.ointeractive.calendar;
+	package ru.ointeractive.calendarview;
 	
 	import android.content.Context;
 	import android.support.v7.widget.RecyclerView;
@@ -8,9 +8,10 @@
 	import java.util.ArrayList;
 	
 	import ru.ointeractive.androdesign.widget.LinearLayoutManager;
-	import ru.ointeractive.jabadaba.Calendar;
-	import ru.ointeractive.jabadaba.Int;
-	import ru.ointeractive.jabadaba.Locales;
+	import ru.ointeractive.andromeda.graphic.Graphic;
+	import upl.core.Calendar;
+	import upl.core.Int;
+	import upl.core.Locales;
 	
 	public class HorizontalCalendarView extends CalendarView {
 		
@@ -70,6 +71,10 @@
 			
 			mCalendar.setFirstDayOfWeek (Calendar.MONDAY);
 			
+			Selection selection = new Selection ()
+				                      .setColor (getContext ().getResources ().getColor (mCurrentTextColor))
+				                      .setBackground (Graphic.toDrawable (getContext (), R.drawable.calendar_selected));
+			
 			for (int i = 0; i < mDaysNum; i++) {
 				
 				Calendar calendar = new Calendar (mCalendar);
@@ -77,10 +82,18 @@
 				
 				addDate (calendar);
 				
-				if (mCalendar.isSameDay (calendar))
+				if (mCalendar.equals (calendar)) {
+					
 					currentDay = calendar;
+					
+					selection.addColor (calendar);
+					selection.addBackground (calendar);
+					
+				}
 				
 			}
+			
+			setSelection (selection);
 			
 		}
 		

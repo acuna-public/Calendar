@@ -1,4 +1,4 @@
-	package ru.ointeractive.calendar;
+	package ru.ointeractive.calendarview;
 	
 	import android.support.annotation.NonNull;
 	import android.support.v7.widget.RecyclerView;
@@ -6,10 +6,8 @@
 	import android.view.View;
 	import android.view.ViewGroup;
 	
-	import ru.ointeractive.andromeda.graphic.Graphic;
-	import ru.ointeractive.jabadaba.Arrays;
-	import ru.ointeractive.jabadaba.Calendar;
-	import ru.ointeractive.jabadaba.Int;
+	import upl.core.Calendar;
+	import upl.core.Int;
 	
 	public class HorizontalCalendarAdapter extends RecyclerView.Adapter<CalendarView.ViewHolder> {
 		
@@ -36,31 +34,19 @@
 			
 			Calendar calendar = mCalendar.mDates.get (position);
 			
-			boolean isCurrent = (mCalendar.currentDay != null && calendar.isSameDay (mCalendar.currentDay));
-			boolean isMarked = Arrays.contains (calendar, mCalendar.mMarkedDates);
+			boolean isCurrent = (mCalendar.currentDay != null && calendar.equals (mCalendar.currentDay));
 			
 			if (holder.nameText != null)
 				holder.nameText.setText (mCalendar.getCurrentWeek (calendar));
 			
-			if (holder.dayText != null) {
-				
-				holder.dayText.setText (mCalendar.getCurrentDay (calendar));
-				
-				if (isCurrent)
-					holder.dayText.setBackgroundDrawable (Graphic.toDrawable (mCalendar.getContext (), R.drawable.calendar_selected));
-				
-				if (isMarked)
-					holder.dayText.setTextColor (mCalendar.mMarkedTextColor);
-				else if (isCurrent)
-					holder.dayText.setTextColor (mCalendar.getContext ().getResources ().getColor (mCalendar.mSelectedTextColor));
-				
-			}
+			if (holder.dayText != null)
+				mCalendar.setText (calendar, holder.dayText);
 			
 			holder.layout.setOnClickListener (new View.OnClickListener () {
 				
 				@Override
 				public void onClick (View view) {
-					mSelectedListener.onDayClick (view, calendar, isCurrent, isMarked);
+					mSelectedListener.onDayClick (view, calendar, isCurrent);
 				}
 				
 			});

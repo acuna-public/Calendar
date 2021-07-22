@@ -1,4 +1,4 @@
-	package ru.ointeractive.calendar;
+	package ru.ointeractive.calendarview;
 	
 	import android.content.Context;
 	import android.view.LayoutInflater;
@@ -7,9 +7,8 @@
 	import android.widget.BaseAdapter;
 	import android.widget.TextView;
 	
-	import ru.ointeractive.andromeda.graphic.Graphic;
-	import ru.ointeractive.jabadaba.Calendar;
-	import ru.ointeractive.jabadaba.Int;
+	import upl.core.Calendar;
+	import upl.core.Int;
 	
 	public class CalendarAdapter extends BaseAdapter {
 		
@@ -41,26 +40,7 @@
 			
 			Calendar calendar = mCalendar.mDates.get (position);
 			
-			textView.setText (mCalendar.getCurrentDay (calendar));
-			
-			for (CalendarView.Selection sel : mCalendar.mSelections)
-				for (Calendar cal : sel.getDates ())
-					if (calendar.isSameDay (cal)) {
-						
-						if (sel.getColor () != null)
-							textView.setTextColor (sel.getColor ());
-						
-						if (sel.getBackground () != null)
-							textView.setBackgroundDrawable (sel.getBackground ());
-						
-					}
-			
-			if (calendar.isSameDay (mCalendar.currentDay)) {
-				
-				textView.setBackgroundDrawable (Graphic.toDrawable (mCalendar.getContext (), R.drawable.calendar_selected));
-				textView.setTextColor (mCalendar.getContext ().getResources ().getColor (android.R.color.white));
-				
-			}
+			mCalendar.setText (calendar, textView);
 			
 			return grid;
 			

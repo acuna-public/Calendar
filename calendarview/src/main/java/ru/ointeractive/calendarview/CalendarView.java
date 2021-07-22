@@ -1,4 +1,4 @@
-	package ru.ointeractive.calendar;
+	package ru.ointeractive.calendarview;
 	
 	import android.content.Context;
 	import android.content.res.TypedArray;
@@ -13,26 +13,26 @@
 	import java.util.List;
 	
 	import ru.ointeractive.androdesign.widget.LinearLayout;
-	import ru.ointeractive.jabadaba.Calendar;
+	import ru.ointeractive.andromeda.graphic.Graphic;
+	import upl.core.Calendar;
 	
 	public class CalendarView extends LinearLayout {
 		
 		protected int mDaysNum = 30;
 		
-		protected int mSelectedTextColor = android.R.color.white;
-		protected int mMarkedTextColor, mPrevTextColor = R.color.light_gray;
+		protected int mCurrentTextColor = android.R.color.white;
+		protected int mPrevTextColor = R.color.light_gray;
 		protected Calendar currentDay;
 		
 		protected int mLayout = R.layout.list_calendar_day, mDayNameLayout = R.layout.list_calendar_name;
 		
 		public List<Calendar> mDates = new ArrayList<> ();
-		public List<Calendar> mMarkedDates = new ArrayList<> ();
 		
 		public Calendar mCalendar;
 		
 		public CalendarAdapter adapter;
 		
-		public List<Selection> mSelections = new ArrayList<> ();
+		protected List<Selection> mSelections = new ArrayList<> ();
 		
 		public CalendarView (Context context) {
 			this (context, null);
@@ -52,10 +52,8 @@
 				
 				int attr = array.getIndex (i);
 				
-				if (attr == R.styleable.CalendarView_selected_text_color)
-					setSelectedTextColor (array.getColor (attr, getResources ().getColor (mSelectedTextColor)));
-				else if (attr == R.styleable.CalendarView_markedTextColor)
-					setMarkedTextColor (array.getResourceId (attr, R.color.primary));
+				if (attr == R.styleable.CalendarView_currentTextColor)
+					setCurrentTextColor (array.getColor (attr, getResources ().getColor (mCurrentTextColor)));
 				else if (attr == R.styleable.CalendarView_dayNameLayout)
 					setDayNameLayout (array.getResourceId (attr, 0));
 				else if (attr == R.styleable.CalendarView_dayLayout)
@@ -71,16 +69,12 @@
 			
 		}
 		
-		public void setSelectedTextColor (int color) {
-			mSelectedTextColor = color;
+		public void setCurrentTextColor (int color) {
+			mCurrentTextColor = color;
 		}
 		
 		public void setPrevTextColor (int color) {
 			mPrevTextColor = color;
-		}
-		
-		public void setMarkedTextColor (int color) {
-			mMarkedTextColor = getResources ().getColor (color);
 		}
 		
 		public void setDayLayout (int layout) {
@@ -106,8 +100,15 @@
 			mDates.add (date);
 		}
 		
-		public void addMarkedDate (Calendar date) {
-			mMarkedDates.add (date);
+		public CalendarView setSelection (Selection sel) {
+			
+			mSelections.add (sel);
+			return this;
+			
+		}
+		
+		public List<Selection> getSelections () {
+			return mSelections;
 		}
 		
 		public void build () {
@@ -147,6 +148,8 @@
 			
 			int oldDay = 0;
 			
+			Selection pSelection = new Selection ().setColor (mPrevTextColor);
+			
 			if (mCalendar.get (Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
 				
 				while (mCalendar.get (Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
@@ -156,8 +159,6 @@
 					
 				}
 				
-				Selection selection = new Selection ().setColor (mPrevTextColor);
-				
 				for (int i = 0; i < oldDay; i++) {
 					
 					Calendar calendar = new Calendar (mCalendar);
@@ -166,11 +167,11 @@
 					
 					addDate (calendar);
 					
-					selection.add (calendar);
-					
-					mSelections.add (selection);
+					pSelection.addColor (calendar);
 					
 				}
+				
+				setSelection (pSelection);
 				
 				mCalendar.add (Calendar.MONTH, 1);
 				mCalendar.set (Calendar.DAY_OF_MONTH, 1);
@@ -185,6 +186,10 @@
 			
 			Calendar cal = new Calendar ();
 			
+			Selection selection = new Selection ()
+				                      .setColor (getContext ().getResources ().getColor (mCurrentTextColor))
+				                      .setBackground (Graphic.toDrawable (getContext (), R.drawable.calendar_selected));
+			
 			for (i = 0; i < mDaysNum - 1; i++) {
 				
 				calendar = new Calendar (mCalendar);
@@ -195,12 +200,20 @@
 				
 				mCalendar.addNewDay ();
 				
-				if (cal.isSameDay (calendar))
-					currentDay = cal;
+				if (cal.equals (calendar)) {
+					
+					currentDay = calendar;
+					
+					selection.addColor (calendar);
+					selection.addBackground (calendar);
+					
+				}
 				
 			}
 			
-			if (mCalendar.get (Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
+			setSelection (selection);
+			
+			/*if (mCalendar.get (Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
 				
 				mCalendar.add (Calendar.MONTH, 1);
 				mCalendar.set (Calendar.DAY_OF_MONTH, 1);
@@ -216,12 +229,15 @@
 					calendar.addNewDay (i);
 					
 					addDate (calendar);
+					pSelection.addColor (calendar);
 					
 					mCalendar.addNewDay ();
 					
 				}
 				
-			}
+				setSelection (pSelection);
+				
+			}*/
 			
 		}
 		
@@ -253,7 +269,7 @@
 		
 		public interface OnClickListener {
 			
-			void onDayClick (View view, Calendar calendar, boolean isCurrent, boolean isMarked);
+			void onDayClick (View view, Calendar calendar, boolean isCurrent);
 			
 		}
 		
@@ -275,7 +291,7 @@
 			
 			private Integer color;
 			private Drawable background;
-			private final List<Calendar> dates = new ArrayList<> ();
+			private final List<Calendar> colorDates = new ArrayList<> (), backgroundDates = new ArrayList<> ();
 			
 			public Selection setColor (int color) {
 				
@@ -299,15 +315,44 @@
 				return background;
 			}
 			
-			public Selection add (Calendar calendar) {
+			public Selection addColor (Calendar calendar) {
 				
-				dates.add (calendar);
+				colorDates.add (calendar);
 				return this;
 				
 			}
 			
-			public List<Calendar> getDates () {
-				return dates;
+			public Selection addBackground (Calendar calendar) {
+				
+				backgroundDates.add (calendar);
+				return this;
+				
+			}
+			
+			public List<Calendar> getColorDates () {
+				return colorDates;
+			}
+			
+			public List<Calendar> getBackgroundDates () {
+				return backgroundDates;
+			}
+			
+		}
+		
+		public void setText (Calendar calendar, TextView textView) {
+			
+			textView.setText (getCurrentDay (calendar));
+			
+			for (Selection sel : getSelections ()) {
+				
+				for (Calendar cal : sel.getColorDates ())
+					if (calendar.equals (cal))
+						textView.setTextColor (sel.getColor ());
+				
+				for (Calendar cal : sel.getBackgroundDates ())
+					if (calendar.equals (cal))
+						textView.setBackgroundDrawable (sel.getBackground ());
+				
 			}
 			
 		}

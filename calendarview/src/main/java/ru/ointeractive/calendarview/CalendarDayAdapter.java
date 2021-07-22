@@ -1,4 +1,4 @@
-	package ru.ointeractive.calendar;
+	package ru.ointeractive.calendarview;
 	
 	import android.content.Context;
 	import android.view.LayoutInflater;
@@ -7,7 +7,7 @@
 	import android.widget.BaseAdapter;
 	import android.widget.TextView;
 	
-	import ru.ointeractive.jabadaba.Int;
+	import upl.core.Int;
 	
 	public class CalendarDayAdapter extends BaseAdapter {
 		
