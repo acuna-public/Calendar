@@ -8,6 +8,7 @@
 	  <attr name="dayLayout" format="reference" />
 	  <attr name="dayNameLayout" format="reference" />
 	  <attr name="daysNum" format="integer" />
+	  <attr name="dateFormat" format="string" />
 	  
   </declare-styleable>
 	

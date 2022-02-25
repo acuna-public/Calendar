@@ -2,37 +2,41 @@
 	
 	import android.content.Context;
 	import android.content.res.TypedArray;
-	import android.graphics.drawable.Drawable;
-	import android.support.v7.widget.RecyclerView;
 	import android.util.AttributeSet;
 	import android.view.View;
 	import android.widget.GridView;
 	import android.widget.TextView;
 	
-	import java.util.ArrayList;
-	import java.util.List;
-	
 	import ru.ointeractive.androdesign.widget.LinearLayout;
 	import ru.ointeractive.andromeda.graphic.Graphic;
 	import upl.core.Calendar;
+	import upl.util.ArrayList;
+	import upl.util.List;
 	
 	public class CalendarView extends LinearLayout {
 		
-		protected int mDaysNum = 30;
+		protected int daysNum = 35; // 7x5
 		
-		protected int mCurrentTextColor = android.R.color.white;
+		protected int mCurrentTextColor = 0;
 		protected int mPrevTextColor = R.color.light_gray;
-		protected Calendar currentDay;
+		protected int currentDay = -1;
 		
 		protected int mLayout = R.layout.list_calendar_day, mDayNameLayout = R.layout.list_calendar_name;
 		
+		protected OnDayClickListener mDayClickListener;
+		protected OnClickListener mClickListener;
+		
 		public List<Calendar> mDates = new ArrayList<> ();
 		
-		public Calendar mCalendar;
+		public Calendar mCalendar = new Calendar ();
 		
 		public CalendarAdapter adapter;
 		
-		protected List<Selection> mSelections = new ArrayList<> ();
+		protected TextView date;
+		
+		List<CalendarSelection> mSelections = new ArrayList<> ();
+		
+		public String dateFormat = "MMMM";
 		
 		public CalendarView (Context context) {
 			this (context, null);
@@ -59,9 +63,11 @@
 				else if (attr == R.styleable.CalendarView_dayLayout)
 					setDayLayout (array.getResourceId (attr, 0));
 				else if (attr == R.styleable.CalendarView_daysNum)
-					setDaysNum (array.getInt (attr, mDaysNum));
+					setDaysNum (array.getInt (attr, daysNum));
 				else if (attr == R.styleable.CalendarView_prevTextColor)
 					setPrevTextColor (array.getColor (attr, getResources ().getColor (mPrevTextColor)));
+				else if (attr == R.styleable.CalendarView_dateFormat)
+					setDateFormat (array.getString (attr));
 				
 			}
 			
@@ -86,80 +92,171 @@
 		}
 		
 		public void setDaysNum (int num) {
-			mDaysNum = num;
+			daysNum = num;
+		}
+		
+		public void setDateFormat (String format) {
+			dateFormat = format;
 		}
 		
 		protected String getCurrentMonth () {
-			
-			int dayOfWeek = mCalendar.get (Calendar.MONTH);
-			return getResources ().getStringArray (R.array.month)[(dayOfWeek)];
-			
+			return mCalendar.getDate (dateFormat);
 		}
 		
 		public void addDate (Calendar date) {
 			mDates.add (date);
 		}
 		
-		public CalendarView setSelection (Selection sel) {
+		public CalendarView setSelection (CalendarSelection sel) {
 			
 			mSelections.add (sel);
 			return this;
 			
 		}
 		
-		public List<Selection> getSelections () {
-			return mSelections;
-		}
-		
 		public void build () {
 			
 			inflate (getContext (), R.layout.calendar, this);
 			
-			mCalendar = new Calendar ();
+			date = findViewById (R.id.date);
 			
-			mCalendar.setFirstDayOfWeek (Calendar.MONDAY);
-			
-			mCalendar.set (Calendar.DAY_OF_MONTH, 1);
-			
-			TextView date = findViewById (R.id.date);
 			date.setText (getCurrentMonth ());
+			
+			View button = findViewById (R.id.prev);
+			
+			button.setOnClickListener (new View.OnClickListener () {
+				
+				@Override
+				public void onClick (View view) {
+					
+					loaded = false;
+					
+					mSelections = new ArrayList<> ();
+					
+					mCalendar.add (Calendar.MONTH, -1);
+					
+					date.setText (getCurrentMonth ());
+					
+					addData (true);
+					
+					adapter.notifyDataSetChanged ();
+					
+					if (mClickListener != null)
+						mClickListener.onPrevClick (view, CalendarView.this);
+					
+				}
+				
+			});
+			
+			button = findViewById (R.id.next);
+			
+			button.setOnClickListener (new View.OnClickListener () {
+				
+				@Override
+				public void onClick (View view) {
+					
+					loaded = false;
+					
+					mSelections = new ArrayList<> ();
+					
+					mCalendar.add (Calendar.MONTH, 1);
+					
+					date.setText (getCurrentMonth ());
+					
+					addData (true);
+					
+					adapter.notifyDataSetChanged ();
+					
+					if (mClickListener != null)
+						mClickListener.onNextClick (view, CalendarView.this);
+					
+				}
+				
+			});
 			
 			GridView gridView = findViewById (R.id.names);
 			
-			CalendarDayAdapter adapter = new CalendarDayAdapter (this, mDayNameLayout);
+			CalendarDayAdapter dayAdapter = new CalendarDayAdapter (getContext (), mDayNameLayout);
 			
-			gridView.setAdapter (adapter);
+			gridView.setAdapter (dayAdapter);
 			
 			gridView = findViewById (R.id.days);
 			
 			setDaysNum (mCalendar.getActualMaximum (Calendar.DAY_OF_MONTH));
 			
-			this.adapter = new CalendarAdapter (this, mLayout);
+			adapter = new CalendarAdapter (this, mLayout);
+			
+			adapter.mSelectedListener = mDayClickListener;
 			
 			addData ();
 			
-			gridView.setAdapter (this.adapter);
+			gridView.setAdapter (adapter);
 			
 		}
 		
+		public CalendarView setListener (OnClickListener listener) {
+			
+			mClickListener = listener;
+			return this;
+			
+		}
+		
+		boolean loaded = false;
+		
 		public void addData () {
+			addData (false);
+		}
+		
+		public void addData (boolean select) {
 			
-			mDates = new ArrayList<> ();
-			
-			int oldDay = 0;
-			
-			Selection pSelection = new Selection ().setColor (mPrevTextColor);
-			
-			if (mCalendar.get (Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
+			if (!loaded) {
 				
-				while (mCalendar.get (Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
+				CalendarSelection prevSelection = new CalendarSelection ()
+					             .setColor (mPrevTextColor);
+				
+				CalendarSelection currentSelection = new CalendarSelection ()
+					             .setBackground (Graphic.toDrawable (getContext (), R.drawable.calendar_current));
+				
+				if (mCurrentTextColor != 0)
+					currentSelection.setColor (mCurrentTextColor);
+				
+				final Calendar cal = new Calendar ();
+				
+				mDates = new ArrayList<> ();
+				
+				mCalendar.setFirstDayOfWeek (Calendar.MONDAY);
+				
+				mCalendar.set (Calendar.DAY_OF_MONTH, 1);
+				
+				int daysNum = 0, prevDay = 0;
+				
+				if (mCalendar.get (Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
 					
-					mCalendar.addNewDay (-1);
-					oldDay++;
+					while (mCalendar.get (Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
+						
+						prevDay++;
+						mCalendar.addNewDay (-1);
+						
+					}
+					
+					for (int i = 0; i < prevDay; i++) {
+						
+						Calendar calendar = new Calendar (mCalendar);
+						
+						calendar.addNewDay (i);
+						
+						addDate (calendar);
+						
+						prevSelection.addColor (calendar);
+						
+					}
+					
+					mCalendar.add (Calendar.MONTH, 1);
+					mCalendar.set (Calendar.DAY_OF_MONTH, 1);
 					
 				}
 				
-				for (int i = 0; i < oldDay; i++) {
+				for (int i = 0; i < mCalendar.getActualMaximum (Calendar.DAY_OF_MONTH); i++) {
 					
 					Calendar calendar = new Calendar (mCalendar);
 					
@@ -167,109 +264,61 @@
 					
 					addDate (calendar);
 					
-					pSelection.addColor (calendar);
+					if (!select && calendar.equals (cal)) {
+						
+						currentDay = daysNum;
+						
+						currentSelection.addColor (calendar);
+						currentSelection.addBackground (calendar);
+						
+					}
+					
+					daysNum++;
 					
 				}
 				
-				setSelection (pSelection);
+				setSelection (currentSelection);
 				
-				mCalendar.add (Calendar.MONTH, 1);
-				mCalendar.set (Calendar.DAY_OF_MONTH, 1);
-				
-			}
-			
-			int i;
-			
-			Calendar calendar = new Calendar (mCalendar);
-			
-			addDate (calendar);
-			
-			Calendar cal = new Calendar ();
-			
-			Selection selection = new Selection ()
-				                      .setColor (getContext ().getResources ().getColor (mCurrentTextColor))
-				                      .setBackground (Graphic.toDrawable (getContext (), R.drawable.calendar_selected));
-			
-			for (i = 0; i < mDaysNum - 1; i++) {
-				
-				calendar = new Calendar (mCalendar);
-				
-				calendar.addNewDay ();
-				
-				addDate (calendar);
-				
-				mCalendar.addNewDay ();
-				
-				if (cal.equals (calendar)) {
+				while (daysNum < 42) { // 7x6
 					
-					currentDay = calendar;
+					Calendar calendar = new Calendar (mCalendar);
 					
-					selection.addColor (calendar);
-					selection.addBackground (calendar);
-					
-				}
-				
-			}
-			
-			setSelection (selection);
-			
-			/*if (mCalendar.get (Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
-				
-				mCalendar.add (Calendar.MONTH, 1);
-				mCalendar.set (Calendar.DAY_OF_MONTH, 1);
-				
-				while (mCalendar.get (Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
-					
-					calendar = new Calendar ();
-					
-					calendar.setFirstDayOfWeek (Calendar.MONDAY);
-					
-					calendar.set (Calendar.DAY_OF_MONTH, 1);
-					
-					calendar.addNewDay (i);
+					calendar.addNewDay (daysNum);
 					
 					addDate (calendar);
-					pSelection.addColor (calendar);
 					
-					mCalendar.addNewDay ();
+					prevSelection.addColor (calendar);
+					
+					daysNum++;
 					
 				}
 				
-				setSelection (pSelection);
+				setSelection (prevSelection);
 				
-			}*/
+				loaded = true;
+				
+			}
 			
 		}
 		
 		public int getCurrentDay () {
-			return (currentDay != null ? currentDay.get (Calendar.DAY_OF_MONTH) : -1); // TODO
+			return currentDay;
 		}
 		
-		public void setListener (OnClickListener listener) {
-			adapter.mSelectedListener = listener;
+		public void setListener (OnDayClickListener listener) {
+			mDayClickListener = listener;
 		}
 		
-		protected static class ViewHolder extends RecyclerView.ViewHolder {
+		public interface OnDayClickListener {
 			
-			TextView nameText, dayText;
-			View layout;
-			
-			protected ViewHolder (View view) {
-				
-				super (view);
-				
-				layout = view.findViewById (R.id.layout);
-				
-				nameText = view.findViewById (R.id.name);
-				dayText = view.findViewById (R.id.day);
-				
-			}
+			void onDayClick (View view, CalendarView calendarView, int position, boolean isCurrent);
 			
 		}
 		
 		public interface OnClickListener {
 			
-			void onDayClick (View view, Calendar calendar, boolean isCurrent);
+			boolean onPrevClick (View view, CalendarView calendarView);
+			boolean onNextClick (View view, CalendarView calendarView);
 			
 		}
 		
@@ -287,71 +336,19 @@
 			
 		}
 		
-		public static class Selection {
-			
-			private Integer color;
-			private Drawable background;
-			private final List<Calendar> colorDates = new ArrayList<> (), backgroundDates = new ArrayList<> ();
-			
-			public Selection setColor (int color) {
-				
-				this.color = color;
-				return this;
-				
-			}
-			
-			public Integer getColor () {
-				return color;
-			}
-			
-			public Selection setBackground (Drawable drawable) {
-				
-				this.background = drawable;
-				return this;
-				
-			}
-			
-			public Drawable getBackground () {
-				return background;
-			}
-			
-			public Selection addColor (Calendar calendar) {
-				
-				colorDates.add (calendar);
-				return this;
-				
-			}
-			
-			public Selection addBackground (Calendar calendar) {
-				
-				backgroundDates.add (calendar);
-				return this;
-				
-			}
-			
-			public List<Calendar> getColorDates () {
-				return colorDates;
-			}
-			
-			public List<Calendar> getBackgroundDates () {
-				return backgroundDates;
-			}
-			
-		}
-		
 		public void setText (Calendar calendar, TextView textView) {
 			
 			textView.setText (getCurrentDay (calendar));
 			
-			for (Selection sel : getSelections ()) {
+			for (CalendarSelection sel : mSelections) {
 				
-				for (Calendar cal : sel.getColorDates ())
-					if (calendar.equals (cal))
-						textView.setTextColor (sel.getColor ());
+				for (Calendar cal : sel.colorDates)
+					if (calendar.equals (cal) && sel.color != 0)
+						textView.setTextColor (sel.color);
 				
-				for (Calendar cal : sel.getBackgroundDates ())
+				for (Calendar cal : sel.backgroundDates)
 					if (calendar.equals (cal))
-						textView.setBackgroundDrawable (sel.getBackground ());
+						textView.setBackgroundDrawable (sel.background);
 				
 			}
 			

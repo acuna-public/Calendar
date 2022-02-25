@@ -8,21 +8,28 @@
       
       minSdkVersion 9
 			
-      versionName project.property ('libraryVersion')
-      
-      vectorDrawables.useSupportLibrary = true
-      
+			vectorDrawables.useSupportLibrary = true
+    
     }
 		
-  }
-  
-  apply from: 'https://raw.githubusercontent.com/acuna-public/MavenUpload/master/bintray.gradle'
-  apply from: 'https://raw.githubusercontent.com/acuna-public/MavenUpload/master/publish.gradle'
+		buildTypes {
+			
+			debug {
+			
+			}
+			
+			release {
+				consumerProguardFiles 'proguard-rules.pro'
+			}
+			
+		}
+		
+	}
   
   dependencies {
-    
-    implementation fileTree (include: ['*.jar'], dir: 'libs')
-    
-    api project (':androdesign')
+		
+		api fileTree (include: ['*.jar', '*.aar'], dir: 'libs')
+		
+		api project (':androdesign')
 		
 	}

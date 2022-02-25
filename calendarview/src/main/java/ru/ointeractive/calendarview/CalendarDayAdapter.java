@@ -11,19 +11,19 @@
 	
 	public class CalendarDayAdapter extends BaseAdapter {
 		
-		private final CalendarView mCalendar;
-		private final int mLayout;
+		protected final Context mContext;
+		protected final int mLayout;
 		
-		private final String[] mDays;
+		protected String[] mDays;
 		
-		public CalendarDayAdapter (CalendarView calendar, int layout) {
+		public CalendarDayAdapter (Context context, int layout) {
 			
-			mCalendar = calendar;
+			mContext = context;
 			mLayout = layout;
 			
 			mDays = new String[7];
 			
-			String[] days = mCalendar.getContext ().getResources ().getStringArray (R.array.day);
+			String[] days = mContext.getResources ().getStringArray (R.array.day);
 			System.arraycopy (days, 0, mDays, 0, 7);
 			
 		}
@@ -35,7 +35,7 @@
 			
 			if (convertView == null) {
 				
-				LayoutInflater inflater = (LayoutInflater) mCalendar.getContext ().getSystemService (Context.LAYOUT_INFLATER_SERVICE);
+				LayoutInflater inflater = (LayoutInflater) mContext.getSystemService (Context.LAYOUT_INFLATER_SERVICE);
 				grid = inflater.inflate (mLayout, parent, false);
 				
 			} else grid = convertView;

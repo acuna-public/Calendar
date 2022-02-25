@@ -7,14 +7,13 @@
 	import android.view.ViewGroup;
 	
 	import upl.core.Calendar;
-	import upl.core.Int;
 	
-	public class HorizontalCalendarAdapter extends RecyclerView.Adapter<CalendarView.ViewHolder> {
+	public class HorizontalCalendarAdapter extends RecyclerView.Adapter<ViewHolder> {
 		
-		private CalendarView mCalendar;
-		private int mLayout;
+		private final CalendarView mCalendar;
+		private final int mLayout;
 		
-		public CalendarView.OnClickListener mSelectedListener;
+		public CalendarView.OnDayClickListener mSelectedListener;
 		
 		public HorizontalCalendarAdapter (CalendarView calendar, int layout) {
 			
@@ -25,16 +24,15 @@
 		
 		@NonNull
 		@Override
-		public CalendarView.ViewHolder onCreateViewHolder (@NonNull ViewGroup group, int i) {
-			return new CalendarView.ViewHolder (LayoutInflater.from (mCalendar.getContext ()).inflate (mLayout, group, false));
+		public ViewHolder onCreateViewHolder (@NonNull ViewGroup group, int i) {
+			return new ViewHolder (LayoutInflater.from (mCalendar.getContext ()).inflate (mLayout, group, false));
 		}
 		
 		@Override
-		public void onBindViewHolder (@NonNull CalendarView.ViewHolder holder, int position) {
+		public void onBindViewHolder (@NonNull ViewHolder holder, int position) {
 			
 			Calendar calendar = mCalendar.mDates.get (position);
-			
-			boolean isCurrent = (mCalendar.currentDay != null && calendar.equals (mCalendar.currentDay));
+			boolean isCurrent = (mCalendar.currentDay == position);
 			
 			if (holder.nameText != null)
 				holder.nameText.setText (mCalendar.getCurrentWeek (calendar));
@@ -46,7 +44,10 @@
 				
 				@Override
 				public void onClick (View view) {
-					mSelectedListener.onDayClick (view, calendar, isCurrent);
+					
+					if (mSelectedListener != null)
+						mSelectedListener.onDayClick (view, mCalendar, holder.getAdapterPosition (), isCurrent);
+					
 				}
 				
 			});
@@ -55,7 +56,7 @@
 		
 		@Override
 		public int getItemCount () {
-			return Int.size (mCalendar.mDates);
+			return mCalendar.mDates.length ();
 		}
 		
 	}

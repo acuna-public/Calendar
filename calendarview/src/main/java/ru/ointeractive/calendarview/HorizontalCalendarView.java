@@ -1,34 +1,38 @@
 	package ru.ointeractive.calendarview;
 	
 	import android.content.Context;
+	import android.support.v7.widget.LinearSnapHelper;
 	import android.support.v7.widget.RecyclerView;
 	import android.util.AttributeSet;
 	import android.widget.TextView;
 	
-	import java.util.ArrayList;
-	
 	import ru.ointeractive.androdesign.widget.LinearLayoutManager;
 	import ru.ointeractive.andromeda.graphic.Graphic;
 	import upl.core.Calendar;
+	import upl.core.Date;
 	import upl.core.Int;
-	import upl.core.Locales;
+	import upl.util.ArrayList;
 	
 	public class HorizontalCalendarView extends CalendarView {
 		
 		public HorizontalCalendarAdapter adapter;
 		
-		protected long mDateStart = Locales.time ();
+		protected long mDateStart = new Date ().getTimeInMillis ();
 		
 		public HorizontalCalendarView (Context context) {
-			super (context);
+			this (context, null);
 		}
 		
 		public HorizontalCalendarView (Context context, AttributeSet attrs) {
-			super (context, attrs);
+			this (context, attrs, 0);
 		}
 		
 		public HorizontalCalendarView (Context context, AttributeSet attrs, int defStyleAttr) {
+			
 			super (context, attrs, defStyleAttr);
+			
+			mCurrentTextColor = getContext ().getResources ().getColor (android.R.color.white);
+			
 		}
 		
 		public void setStartDate (long time) {
@@ -49,7 +53,7 @@
 			
 			RecyclerView recyclerView = findViewById (R.id.days);
 			
-			//new LinearSnapHelper ().attachToRecyclerView (recyclerView);
+			new LinearSnapHelper ().attachToRecyclerView (recyclerView);
 			
 			recyclerView.setLayoutManager (new LinearLayoutManager (getContext (), LinearLayoutManager.HORIZONTAL, false));
 			
@@ -67,24 +71,25 @@
 			
 			mDates = new ArrayList<> ();
 			
-			mCalendar = new Calendar (mDateStart);
-			
+			mCalendar.setTimeInMillis (mDateStart);
 			mCalendar.setFirstDayOfWeek (Calendar.MONDAY);
 			
-			Selection selection = new Selection ()
-				                      .setColor (getContext ().getResources ().getColor (mCurrentTextColor))
-				                      .setBackground (Graphic.toDrawable (getContext (), R.drawable.calendar_selected));
+			CalendarSelection selection = new CalendarSelection ()
+				                      //.setColor (mCurrentTextColor)
+				                      .setBackground (Graphic.toDrawable (getContext (), R.drawable.calendar_current));
 			
-			for (int i = 0; i < mDaysNum; i++) {
+			Calendar current = new Calendar ();
+			
+			for (int i = 0; i < daysNum; i++) {
 				
 				Calendar calendar = new Calendar (mCalendar);
 				calendar.addNewDay (i);
 				
 				addDate (calendar);
 				
-				if (mCalendar.equals (calendar)) {
+				if (calendar.equals (current)) {
 					
-					currentDay = calendar;
+					currentDay = i;
 					
 					selection.addColor (calendar);
 					selection.addBackground (calendar);

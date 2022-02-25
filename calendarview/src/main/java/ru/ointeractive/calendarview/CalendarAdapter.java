@@ -8,18 +8,17 @@
 	import android.widget.TextView;
 	
 	import upl.core.Calendar;
-	import upl.core.Int;
 	
 	public class CalendarAdapter extends BaseAdapter {
 		
-		private CalendarView mCalendar;
-		private int mLayout;
+		private final CalendarView calendarView;
+		private final int mLayout;
 		
-		public CalendarView.OnClickListener mSelectedListener;
+		public CalendarView.OnDayClickListener mSelectedListener;
 		
-		public CalendarAdapter (CalendarView calendar, int layout) {
+		public CalendarAdapter (CalendarView calendarView, int layout) {
 			
-			mCalendar = calendar;
+			this.calendarView = calendarView;
 			mLayout = layout;
 			
 		}
@@ -29,18 +28,33 @@
 			
 			View grid;
 			
-			if (convertView == null) {
+			//if (convertView == null) {
 				
-				LayoutInflater inflater = (LayoutInflater) mCalendar.getContext ().getSystemService (Context.LAYOUT_INFLATER_SERVICE);
+				LayoutInflater inflater = (LayoutInflater) calendarView.getContext ().getSystemService (Context.LAYOUT_INFLATER_SERVICE);
 				grid = inflater.inflate (mLayout, parent, false);
 				
-			} else grid = convertView;
+			//} else grid = convertView;
 			
 			TextView textView = grid.findViewById (R.id.day);
 			
-			Calendar calendar = mCalendar.mDates.get (position);
+			Calendar calendar = calendarView.mDates.get (position);
+			boolean isCurrent = (calendarView.currentDay == position);
 			
-			mCalendar.setText (calendar, textView);
+			calendarView.setText (calendar, textView);
+			
+			View layout = grid.findViewById (R.id.layout);
+			
+			layout.setOnClickListener (new View.OnClickListener () {
+				
+				@Override
+				public void onClick (View view) {
+					
+					if (mSelectedListener != null)
+						mSelectedListener.onDayClick (grid, calendarView, position, isCurrent);
+					
+				}
+				
+			});
 			
 			return grid;
 			
@@ -48,12 +62,12 @@
 		
 		@Override
 		public int getCount () {
-			return Int.size (mCalendar.mDates);
+			return calendarView.mDates.length ();
 		}
 		
 		@Override
 		public Object getItem (int position) {
-			return mCalendar.mDates.get (position);
+			return calendarView.mDates.get (position);
 		}
 		
 		@Override
